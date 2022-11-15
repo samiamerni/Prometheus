@@ -20,10 +20,21 @@ helm repo add prometheus-community https://prometheus-community.github.io/helm-c
 ```
 
 ```
-helm upgrade --install prom prometheus-community/kube-prometheus-stack -n monitoring --values prom-values.yaml
+helm upgrade --install prometheus  prometheus-community/kube-prometheus-stack -n monitoring --values prom-values.yaml
 ```
 
-Install promtail to colelct logs from every node:
+Expose Pormetheus, Grafana and Alert manager:
+```
+kubectl expose -n monitoring svc prometheus-kube-prometheus-prometheus  --name prometheus-ext --port 9090 --type NodePort
+```
+```
+kubectl expose -n monitoring svc prometheus-grafana  --name prometheus-grafana-ext --port 3000 --type NodePort
+```
+```
+kubectl -n monitoring describe svc prometheus-kube-prometheus-alertmanager-ext
+```
+
+Install promtail to collect logs from every node:
 
 
 ```
@@ -34,4 +45,16 @@ helm upgrade --install promtail grafana/promtail -f promtail-values.yaml -n moni
 Install loki to collect all the logs from promtail:
 ```
 helm upgrade --install loki grafana/loki-distributed -n monitoring
+```
+
+Configure Alert Manager: ( make sure to modify the file )
+
+```
+helm upgrade --reuse-values -f alertmanager-config.yaml prometheus prometheus-community/kube-prometheus-stack -n monitoring
+```
+
+Configure Alert rules:
+
+```
+helm upgrade --reuse-values -f alert-rules.yaml prometheus prometheus-community/kube-prometheus-stack -n monitoring
 ```
