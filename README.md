@@ -34,9 +34,27 @@ kubectl expose -n monitoring svc prometheus-grafana  --name prometheus-grafana-e
 kubectl -n monitoring describe svc prometheus-kube-prometheus-alertmanager-ext
 ```
 
+In my case i had some configurations to add into kubernetes components:
+
+## kube-proxy:
+I added this line into cm/kube-proxy: metricsBindAddress: 0.0.0.0:10249
+```
+ kubectl edit cm/kube-proxy -n kube-system
+```
+
+## etcd:
+I added this ",http://192.168.8.75:2381" into manifest /etc/kubernetes/manifests/etcd.yaml: --listen-metrics-urls=http://127.0.0.1:2381,http://192.168.8.75:2381
+```
+vim /etc/kubernetes/manifests/etcd.yaml
+```
+## scheduler:
+
+I changed "--bind-address=127.0.0.1"  by"--bind-address=192.168.8.75" 
+And i had to restart kubelet and containerd because kube-scheduler stucks in pending state
+
+
+
 Install promtail to collect logs from every node:
-
-
 ```
 helm upgrade --install promtail grafana/promtail -f promtail-values.yaml -n monitoring
 ```
